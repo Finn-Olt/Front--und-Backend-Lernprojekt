@@ -38,15 +38,16 @@ faecher = {
 }
 
 
-def matching(ticket: ImportDatensatz):
+def matching(ticket: list[ImportDatensatz]) -> list[ImportDatensatz]:
     #Das Fach ermitteln
     besteFaecher = matchingDo(ticket)
     
-    for fach in besteFaecher:
-        if len(ticket.fach) > 0:
-            ticket.fach[0] = besteFaecher[0]
+    for bestesFach in besteFaecher:
+        #Wenn schon Inhalt exisitert, diesen überschreiben, sonst Inhalt "erstellen"
+        if len(ticket.fach[bestesFach]) > 0:
+            ticket.fach[bestesFach] = besteFaecher[bestesFach]
         else:
-            ticket.fach.append(besteFaecher[0])
+            ticket.fach.append(besteFaecher[bestesFach])
 
     return ticket
 
@@ -88,16 +89,3 @@ def matchingDo(ticket: ImportDatensatz) -> list:
             besteFaecher.append(fach)
 
     return besteFaecher
-
-"""
-    #Regel 3 - Ein Fach hat die höhchste Punktzahl
-    if len(besteFaecher) == 1:
-        return besteFaecher[0]
-
-    #Regel 2 - Mehere Fächer haben die höchste Punktzahl // durch "join" werden die Array Positionen mit einem Komma getrennt und zurück gegeben
-    return ", ".join(besteFaecher)
-       
-
-    #max Funktion => Vergleicht die Punkte, benutzt dafür als key die Punkte und gibt das Fach mit den meisten Punkten zurück 
-    #max(punkte, key=punkte.get)
-"""

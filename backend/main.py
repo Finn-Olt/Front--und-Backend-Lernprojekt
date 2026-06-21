@@ -1,5 +1,6 @@
 from backend.importExportFunktionen import jsonRead, csvRead, xmlRead, jsonWriteInDatabase, csvWriteInDatabase, xmlWriteInDatabase
-from backend.database import alleTicketsLaden, ticketLoeschen
+from backend.database import alleTicketsLaden, ticketLoeschen, einTicketLaden, alleTicketsLoeschen
+from backend.datensatzStruktur import ImportDatensatz
 from pathlib import Path
 from dataclasses import asdict
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
@@ -25,8 +26,7 @@ async def upload(request: Request, importDatei: UploadFile = File(...)):
     #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
     if request.client.host != "127.0.0.1":
         raise HTTPException(status_code=403, detail="Zugriff verweigert")
-    
-    #Lesen und speichern vom Inhalt der importierten Datei
+
     dateiInhalt = await importDatei.read()
 
     #Importverzeichnis erstellen, dann checks durchführen und die Importdatei in das Importverzeichnis schreiben
@@ -34,87 +34,91 @@ async def upload(request: Request, importDatei: UploadFile = File(...)):
     importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName)
     
     dateiTyp = dateiname.split(".")[-1].lower()
-    ticket = writeFile(str(dateiPfadUndName), dateiTyp)
+    tickets = writeFile(str(dateiPfadUndName), dateiTyp)
     
-    return {"status": "saved", "ticket": asdict(ticket)}
-    
+    if len(tickets) == 0:
+        raise HTTPException(
+        status_code=404,
+        detail="Ticket nicht gefunden"
+    )   
+    return {"status": "saved", "ticket": [asdict(ticket) for ticket in tickets]}
+
 
 #Für DELETE
-@app.delete("/delete")
-async def delete(request: Request, importDatei: UploadFile = File(...)):
-    #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
-    if request.client.host != "127.0.0.1":
-        raise HTTPException(status_code=403, detail="Zugriff verweigert")
-    
-    #Lesen und speichern vom Inhalt der importierten Datei
-    dateiInhalt = await importDatei.read()
+@app.delete("/delete/{story_id}")
+async def deleteTicket(story_id: str):
+    tickets = ticketLoeschen(story_id)
+    if len(tickets) == 0:
+        raise HTTPException(
+        status_code=404,
+        detail="Ticket nicht gefunden"
+    )
+    return {"status": "deleted", "ticketID": story_id}
 
-    dateiPfadUndName, dateiname = importVerzeichnisErstellen(importDatei)
-    importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName)
-    
-    dateiTyp = dateiname.split(".")[-1].lower()
-        
-    tickets = readFile(dateiTyp, str(dateiPfadUndName))
-    ticketCount = 0
-    for ticket in tickets:
-        ticketLoeschen(ticket.id)
-        ticketCount += 1
-    
-    if ticketCount > 0:
-        return {"status": "Ticket(s) gelöscht", "tickets": tickets, "ticketAnzahl": ticketCount}
-    else:
-        return {"status": "Es wurden keine Tickets gelöscht"}
+@app.delete("/delete")
+async def deleteAllTickets(importDatei: UploadFile = File(...)):
+    alleTicketsLoeschen()
+    return {"status": "Es wurden alle Einträge der Datenbank gelöscht."}
 
 
 #Für GET
-@app.get("/get-tickets")
-async def getTickets(request: Request):
-    #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
-    if request.client.host != "127.0.0.1":
-        raise HTTPException(status_code=403, detail="Zugriff verweigert")
-    
-    tickets = alleTicketsLaden()
-    #Gibt alle Objekte in der Datenbank zurück
-    return tickets
-    
-    #Dafür müssen die Objekte in der Liste von Typ ImportDatensatz sein
-    #return [asdict(ticket) for ticket in tickets]
+@app.get("/readtickets/{ticket_id}")
+async def readTicket(ticket_id: str):
+    tickets: list[ImportDatensatz] = einTicketLaden(ticket_id)
+    if len(tickets) == 0:
+        raise HTTPException(
+        status_code=404,
+        detail="Ticket nicht gefunden"
+    )
+    return {"status": "read", "ticket": [asdict(ticket) for ticket in tickets]}
+
+@app.get("/readtickets")
+async def readTickets():
+    tickets: list[ImportDatensatz] = alleTicketsLaden()
+    return {"status": "read", "tickets": [asdict(ticket) for ticket in tickets]}
 
 
 
 
 
-
+#Hilfsfunktionen
+#Erstellt "imports" Ordner im Projektverzeichnis und gibt Dateinamen und Pfad zurück
 def importVerzeichnisErstellen(importDatei):
-    #Erstellt einen "uploads" Ordner im Projektpfad // Vorteil: Importdateien und Codedateien etc. trennen
-    speicherPfad = Path("backend/imports")
+    speicherPfad = Path("imports")
     speicherPfad.mkdir(exist_ok=True)
 
-    #Gibt NUR den wirklichen Namen der Datei zurück 
     dateiname = Path(importDatei.filename).name
     dateiPfadUndName = speicherPfad / dateiname
     
     return dateiPfadUndName, dateiname
 
-
+#Checks + schreiben der importieren Datei
 def importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName):
-    # Sicherheitscheck
-    if not dateiname.endswith((".csv", ".json", ".xml")):
-        #return {"error": "Ungültiger Dateityp"}
-        #Echter Http Fehlercode
+    #Dateityp kontrollieren
+    if not dateiname.endswith((".csv", ".json", ".xml", ".CSV", ".JSON", ".XML")):
         raise HTTPException(status_code=400, detail="Ungültiger Dateityp")
 
-    #Dateigröße Checken, damit keiner eine 100GB große Datei hochladen kann
+    #Dateigröße Checken
     maxDateiGroesse = 5 * 1024 * 1024
     if len(dateiInhalt) > maxDateiGroesse:
-        #return {"error": "Imortdatei zu groß"}
-        raise HTTPException(status_code=401, detail="Imortdatei zu groß")
+        raise HTTPException(status_code=401, detail="Importdatei zu groß")
 
-    #Schreibt den Inhalt als Datei im Projektverzeichnis // Eigentlich besser über den Arbeitsspeicher, aber meine anderen Funktionen basieren auf Dateien
-    #"wb" => w = write (schreiben), b = binary (Binärdaten)
     with open(dateiPfadUndName, "wb") as f:
         f.write(dateiInhalt)
 
+#Liest die Importdatei, verarbeitet den Inhalt und schreibt ihn in die Datenbank, 
+#anschließend wird das Objekt, bzw. die Objekte zurück gegeben
+def writeFile(dateiname, dateiTyp) -> list[ImportDatensatz]:
+    match dateiTyp:
+        case "json":
+            return jsonWriteInDatabase(dateiname)
+
+        case "csv":
+            return csvWriteInDatabase(dateiname)
+
+        #case "xml":
+        #   return xmlWriteInDatabase(dateiname)
+        
 
 def readFile(dateityp, dateiName):
     match dateityp:
@@ -124,26 +128,8 @@ def readFile(dateityp, dateiName):
         case "csv":
             return csvRead(dateiName)
 
-        case "xml":
-            return xmlRead(dateiName)
-
-        case _:
-            return("Dateityp nicht unterstützt")
-
-
-def writeFile(dateiname, dateiTyp):
-    match dateiTyp:
-        case "json":
-            return jsonWriteInDatabase(dateiname)
-
-        case "csv":
-            return csvWriteInDatabase(dateiname)
-
-        case "xml":
-            return xmlWriteInDatabase(dateiname)
-
-        case _:
-            return("Dateityp nicht unterstützt")
+        #case "xml":
+        #    return xmlRead(dateiName)
 
 
 

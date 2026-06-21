@@ -75,7 +75,7 @@ def ticketSpeichern(ticket: ImportDatensatz):
     datenbank.close()
 
 #Gesamte Datenbank ausgeben
-def alleTicketsLaden():
+def alleTicketsLaden() -> list[ImportDatensatz]:
     datenbank = dbOpen()
     cursor = datenbank.cursor()
 
@@ -90,17 +90,78 @@ def alleTicketsLaden():
 
     datenbank.close()
 
+    tickets = []
+    for datensatz in datensaetze:
+        ticket = ImportDatensatz(
+            id=datensatz[0],
+            quellDatei=datensatz[1],
+            titel=datensatz[2],
+            beschreibung=datensatz[3],
+            prio=datensatz[4],
+            status=datensatz[5],
+            fach=datensatz[6]
+        )
+
+        tickets.append(ticket)
+
     #Gibt alle Datensätze aus der Datenbank zurück
-    return datensaetze
+    return tickets
+
+#Ticket mit genau der ID laden 
+def einTicketLaden(idTicket: str) -> list[ImportDatensatz]:
+    datenbank = dbOpen()
+    cursor = datenbank.cursor() 
+
+    print("Datenbank erstellt.")
+
+    #Gibt ggf. Fehler zurück
+    dbFehlerFang(cursor)
+
+    #Gibt alle Datensätze aus der Datenbank zurück // ? ist der Platzhalter
+    cursor.execute("SELECT * FROM tickets WHERE idDatensatz = ?",(idTicket,))
+    datensaetze = cursor.fetchall()
+
+    datenbank.close()
+
+    tickets = []
+    for datensatz in datensaetze:
+        ticket = ImportDatensatz(
+            id=datensatz[0],
+            quellDatei=datensatz[1],
+            titel=datensatz[2],
+            beschreibung=datensatz[3],
+            prio=datensatz[4],
+            status=datensatz[5],
+            fach=datensatz[6]
+        )
+
+        tickets.append(ticket)
+
+    #Gibt alle Datensätze aus der Datenbank zurück, als Liste mit importDatensatz Objekten
+    return tickets
+
+
+#Alle Tickets löschen
+def alleTicketsLoeschen():
+    datenbank = dbOpen()
+    cursor = datenbank.cursor()
+
+    #Löscht alle Einträge, aber Tabellenstruktur bleibt erhalten
+    cursor.execute("DELETE FROM tickets")
+    datenbank.commit()
+    datenbank.close()
 
 
 #Löscht einen Datensatz
-def ticketLoeschen(ticketID):
+def ticketLoeschen(ticketID) -> list[ImportDatensatz]:
     datenbank = dbOpen()
     cursor = datenbank.cursor()
 
     #Gibt ggf. Fehler zurück
     dbFehlerFang(cursor)
+
+    cursor.execute("SELECT * FROM tickets WHERE idDatensatz = ?",(ticketID,))
+    datensaetze = cursor.fetchall()
 
     #Löscht den Datensatz mit der übergebenen ID
     cursor.execute(
@@ -112,3 +173,20 @@ def ticketLoeschen(ticketID):
     print("Gelöschte ID:", ticketID)
     
     datenbank.close()
+    
+    tickets = []
+    for datensatz in datensaetze:
+        ticket = ImportDatensatz(
+            id=datensatz[0],
+            quellDatei=datensatz[1],
+            titel=datensatz[2],
+            beschreibung=datensatz[3],
+            prio=datensatz[4],
+            status=datensatz[5],
+            fach=datensatz[6]
+        )
+
+        tickets.append(ticket)
+    
+    
+    return datensaetze

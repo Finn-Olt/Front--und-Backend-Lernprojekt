@@ -1,25 +1,23 @@
 import json
 import csv
-import xml.etree.ElementTree as ET
+#import xml.etree.ElementTree as ET
 
 from backend.datensatzStruktur import ImportDatensatz
 from backend.database import *
 from backend.fachZuweisung import matching
 
-def jsonRead(dateiname):
+#JSON
+def jsonRead(dateiname) -> list[ImportDatensatz]:
     #Schauen, von welchem Datentyp "dateiname" ist, MUSS "str, bytes or os.PathLike object" sein
     print(type(dateiname))
     
     with open(dateiname, "r", encoding="utf-8") as datei:
         datensatz = json.load(datei)
-        
+    
+    tickets:list[ImportDatensatz] = jsonToTicket(datensatz, dateiname)
     #Wandelt den JSON Datensatz in ein "ticket" Datensatz um und gibt das Ticket als ImportDatensatz Objekt zurück
-    return jsonToTicket(datensatz, dateiname)
+    return tickets
 
-
-#Da ich die @dataclass benutze, hier besser auch typitisieren
-#Funktion erwartet einen "datensatz" von Typ Dictionary und einen "datennamen" von Typ String
-#Rückgabetyp-Annotation => Funktion gibt ein Objekt vom Typ "ImportDatensatz" zurück
 def jsonToTicket(datensatz: dict, dateiname: str) -> ImportDatensatz:
     return ImportDatensatz(
         id=datensatz["author"]["id"],
@@ -30,35 +28,28 @@ def jsonToTicket(datensatz: dict, dateiname: str) -> ImportDatensatz:
         status=datensatz["state"]
     )
 
-"""
-#Mapping, da die Dateien unterschiedlich aufgebaut sind // Python Objekt befüllen
-def jsonToTicket(datensatz, dateiname):
-    return ImportDatensatz(
-        id=datensatz["author"]["id"],
-        quellDatei=dateiname,
-        titel=datensatz["title"],
-        beschreibung=datensatz["body"],
-        prio="",
-        status=datensatz["state"],
-    )       
-"""
+#Schreiben von dem Ticket in die Datenbank
+def jsonWriteInDatabase(dateiname):
+    dbInit()
+    ticket = jsonRead(dateiname)
+    print(ticket)
+    ticket = matching(ticket)
+    ticketSpeichern(ticket)
+    return ticket
 
-def csvRead(dateiname):
-    #CSV hat meistens mehrere Datensätze, deshalb Array zum Speichern der Datensätze
-    tickets = []
-    
-    #Schauen, von welchem Datentyp "dateiname" ist, MUSS "str, bytes or os.PathLike object" sein
-    print(type(dateiname))
+#CSV
+def csvRead(dateiname: str) -> list[ImportDatensatz]:
+    #CSV hat meistens mehrere Datensätze, deshalb Liste zum Speichern der Datensätze
+    tickets: list[ImportDatensatz]
 
     with open(dateiname, "r", encoding="utf-8") as datei:
         datensaetze = csv.DictReader(datei)
 
         for datensatz in datensaetze:
-            #ticket = csvToTicket(datensatz)
-            #Wandelt den CSV Datensatz in ein ticket Datensatz um und speichert ihn im tickets Array 
+            #Wandelt den CSV Datensatz in ein ticket Datensatz um und speichert ihn in der Liste 
             tickets.append(csvToTicket(datensatz,dateiname))
 
-    #Gibt das Array zurück
+    #Gibt die Liste zurück
     return tickets
 
 #Für das Mapping von CSV zu allg. Datensatz
@@ -72,7 +63,19 @@ def csvToTicket(datensatz: dict, dateiname: str) -> ImportDatensatz:
         status=datensatz["status"],
     )
 
+#Schreiben der Tickets in die Datenbank
+def csvWriteInDatabase(dateiname) -> list[ImportDatensatz]:
+    dbInit()
+    tickets = csvRead(dateiname)
+    for ticket in tickets:
+        print(ticket)
+        ticket = matching(ticket)
+        ticketSpeichern(ticket)
+    return tickets
 
+
+#XML
+"""
 def xmlRead(dateiname):
     #Schauen, von welchem Datentyp "dateiname" ist, MUSS "str, bytes or os.PathLike object" sein
     print(type(dateiname))
@@ -88,32 +91,12 @@ def xmlRead(dateiname):
     )
 
     return ticket
-
-
-#Schreiben von dem Ticket in die Datenbank
-def jsonWriteInDatabase(dateiname):
-    dbInit()
-    ticket = jsonRead(dateiname)
-    print(ticket)
-    ticket = matching(ticket)
-    ticketSpeichern(ticket)
-    return ticket
-
-    
-#Schreiben der Tickets in die Datenbank
-def csvWriteInDatabase(dateiname):
-    dbInit()
-    tickets = csvRead(dateiname)
-    for ticket in tickets:
-        print(ticket)
-        ticket = matching(ticket)
-        ticketSpeichern(ticket)
-    return tickets
-
-
+"""
+"""
 def xmlWriteInDatabase(dateiname):
     dbInit()
     ticket = xmlRead(dateiname)
     print(ticket)
     ticket = matching(ticket)
     ticketSpeichern(ticket)
+"""
