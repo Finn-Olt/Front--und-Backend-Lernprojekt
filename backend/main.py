@@ -1,0 +1,325 @@
+from backend.importExportFunktionen import jsonRead, csvRead, xmlRead, jsonWriteInDatabase, csvWriteInDatabase, xmlWriteInDatabase
+from backend.database import alleTicketsLaden, ticketLoeschen
+from pathlib import Path
+from dataclasses import asdict
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+
+
+#todo die Verbindung wird nicht Zugelassen UND was sind CORS?
+""" Sollte die Verbindung nicht zugelassen werden, aufgrund der unterschiedlichen Ursprünge (Vom lokalen Datenträger und API IP)
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+"""
+
+app = FastAPI()
+
+#Für post (Hochladen) // Bedeutet "Die Funktion darunter soll aufgerufen werden, wenn jemand eine POST-Anfrage an /process schickt."
+@app.post("/upload")
+async def upload(request: Request, importDatei: UploadFile = File(...)):
+    #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
+    if request.client.host != "127.0.0.1":
+        raise HTTPException(status_code=403, detail="Zugriff verweigert")
+    
+    #Lesen und speichern vom Inhalt der importierten Datei
+    dateiInhalt = await importDatei.read()
+
+    #Importverzeichnis erstellen, dann checks durchführen und die Importdatei in das Importverzeichnis schreiben
+    dateiPfadUndName, dateiname = importVerzeichnisErstellen(importDatei)
+    importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName)
+    
+    dateiTyp = dateiname.split(".")[-1].lower()
+    ticket = writeFile(str(dateiPfadUndName), dateiTyp)
+    
+    return {"status": "saved", "ticket": asdict(ticket)}
+    
+
+#Für DELETE
+@app.delete("/delete")
+async def delete(request: Request, importDatei: UploadFile = File(...)):
+    #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
+    if request.client.host != "127.0.0.1":
+        raise HTTPException(status_code=403, detail="Zugriff verweigert")
+    
+    #Lesen und speichern vom Inhalt der importierten Datei
+    dateiInhalt = await importDatei.read()
+
+    dateiPfadUndName, dateiname = importVerzeichnisErstellen(importDatei)
+    importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName)
+    
+    dateiTyp = dateiname.split(".")[-1].lower()
+        
+    tickets = readFile(dateiTyp, str(dateiPfadUndName))
+    ticketCount = 0
+    for ticket in tickets:
+        ticketLoeschen(ticket.id)
+        ticketCount += 1
+    
+    if ticketCount > 0:
+        return {"status": "Ticket(s) gelöscht", "tickets": tickets, "ticketAnzahl": ticketCount}
+    else:
+        return {"status": "Es wurden keine Tickets gelöscht"}
+
+
+#Für GET
+@app.get("/get-tickets")
+async def getTickets(request: Request):
+    #Wenn die IP nicht die local-host IP ist, wird der Zugriff verweigert
+    if request.client.host != "127.0.0.1":
+        raise HTTPException(status_code=403, detail="Zugriff verweigert")
+    
+    tickets = alleTicketsLaden()
+    #Gibt alle Objekte in der Datenbank zurück
+    return tickets
+    
+    #Dafür müssen die Objekte in der Liste von Typ ImportDatensatz sein
+    #return [asdict(ticket) for ticket in tickets]
+
+
+
+
+
+
+def importVerzeichnisErstellen(importDatei):
+    #Erstellt einen "uploads" Ordner im Projektpfad // Vorteil: Importdateien und Codedateien etc. trennen
+    speicherPfad = Path("backend/imports")
+    speicherPfad.mkdir(exist_ok=True)
+
+    #Gibt NUR den wirklichen Namen der Datei zurück 
+    dateiname = Path(importDatei.filename).name
+    dateiPfadUndName = speicherPfad / dateiname
+    
+    return dateiPfadUndName, dateiname
+
+
+def importDateiCheckUndDateiKopieren(dateiInhalt, dateiname, dateiPfadUndName):
+    # Sicherheitscheck
+    if not dateiname.endswith((".csv", ".json", ".xml")):
+        #return {"error": "Ungültiger Dateityp"}
+        #Echter Http Fehlercode
+        raise HTTPException(status_code=400, detail="Ungültiger Dateityp")
+
+    #Dateigröße Checken, damit keiner eine 100GB große Datei hochladen kann
+    maxDateiGroesse = 5 * 1024 * 1024
+    if len(dateiInhalt) > maxDateiGroesse:
+        #return {"error": "Imortdatei zu groß"}
+        raise HTTPException(status_code=401, detail="Imortdatei zu groß")
+
+    #Schreibt den Inhalt als Datei im Projektverzeichnis // Eigentlich besser über den Arbeitsspeicher, aber meine anderen Funktionen basieren auf Dateien
+    #"wb" => w = write (schreiben), b = binary (Binärdaten)
+    with open(dateiPfadUndName, "wb") as f:
+        f.write(dateiInhalt)
+
+
+def readFile(dateityp, dateiName):
+    match dateityp:
+        case "json":
+            return jsonRead(dateiName)
+
+        case "csv":
+            return csvRead(dateiName)
+
+        case "xml":
+            return xmlRead(dateiName)
+
+        case _:
+            return("Dateityp nicht unterstützt")
+
+
+def writeFile(dateiname, dateiTyp):
+    match dateiTyp:
+        case "json":
+            return jsonWriteInDatabase(dateiname)
+
+        case "csv":
+            return csvWriteInDatabase(dateiname)
+
+        case "xml":
+            return xmlWriteInDatabase(dateiname)
+
+        case _:
+            return("Dateityp nicht unterstützt")
+
+
+
+
+
+
+""" Brauche ich nicht, per Doppelklick auf die HTML Datei öffnet sich die Webseite und über den JS Code werden die Endpunkte ausgeführt
+#FastAPI muss den static Ordner kennen, um die Designs, etc. laden/benutzen zu können
+from fastapi.staticfiles import StaticFiles
+#FastAPI-Komponente, die Dateien direkt an den Browser ausliefern kann
+from fastapi.templating import Jinja2Templates
+
+#Damit der Browser die Dateien laden kann // Alles, was im Browser mit /static angefragt wird, soll aus dem Ordner static geladen werden
+app.mount("/static", StaticFiles(directory="static"), name="static")
+#FastAPI HTML-Dateien aus dem Ordner templates laden
+templates = Jinja2Templates(directory="templates")
+
+#Startseite
+@app.get("/")
+async def startseite(request: Request):
+    #Zum Testen, wenn ich Status OK sehe, ist der Fehler bei Jinja2 oder templates/index.html
+    #return {"status": "ok"}
+    
+    #Lade die Datei index.html // Übergib Daten an die HTML-Seite
+    return templates.TemplateResponse({"request": request}, "index.html")
+"""
+"""
+#import sys => sys.exit()
+
+def main():
+    #Hier muss die Datei ankommen => Name muss in "dateiname" gespeichert werden
+    #0. API-Anbindung
+   
+    #TODO wieder ausbauen! NUR ZUM TESTEN !
+    modus = "show"
+    dateiname = "issue.csv"
+   
+   #Check, ob die hochgeladene Datei wirklich eine CSV oder JSON Datei ist 
+    if not dateiname.endswith((".csv", ".json")):
+        raise Exception("Ungültiger Dateityp")
+    
+    #Die maximale Dateigröße setzen // Prüfung einbauen?
+    MAX_SIZE = 5 * 1024 * 1024  # 5 MB
+    content = await importDatei.read()
+    if len(content) > MAX_SIZE:
+        return {"error": "Datei zu groß"}
+    
+    
+    print(dateiname)
+    print(modus)
+
+    
+    #1. Check welcher Modus
+    match modus:
+        case "dele":
+            #"if dateiname" <=> "if dateiname is not none:"
+            if dateiname:
+                #Namen und Typ splitten
+                print("Geht in dele rein.")
+                dateiTyp = dateiname.split(".")[-1].lower()
+                if dateiTyp:
+                    tickets = readFile(dateiTyp, dateiname)
+                    for ticket in tickets:
+                        ticketID = ticket.id
+                        ticketLoeschen(ticketID)
+            
+        case "save":
+            if dateiname:
+                #Namen und Typ splitten
+                dateiTyp = dateiname.split(".")[-1].lower()
+                if dateiTyp:
+                    print("Typ korrekt, Geht in save rein.")
+                    writeFile(dateiname, dateiTyp)
+    
+        case "show":
+            print("Geht in show rein.")
+            datensaetze = alleTicketsLaden()
+            for datensatz in datensaetze:
+                print(datensatz)
+            #Datensätze an die Webseite zurück geben
+            #Dafür eine JSON Datei mit allen Datensätzen schreiben?
+    
+    #Beendet das Programm
+    sys.exit()
+
+#Hierdurch startet das Programm über die main() Funktion
+if __name__ == "__main__":
+    main()
+"""
+
+
+
+
+
+
+
+
+
+#from fastapi import FastAPI, UploadFile
+#app = FastAPI()
+
+#@app.post("/upload")
+#async def upload_datei(datei: UploadFile):
+ #   inhalt = await datei.read()
+  #  print(datei.filename)
+   # return {"Datei erhalten": datei.filename}
+   
+   
+"""
+Extrem wichtig für Python-Projekte:
+1. CMD mit Pfad des Projekts öffnen/dahin welchseln 
+2. "py -m venv venv" => erstellt eine "virtuelles Environment (venv)" 
+3. Danach in der CMD zum aktivieren der "venv": venv\Scripts\activate in der CMD 
+    ->mit "deactivate" in dem CMD macht man die "venv" wieder aus
+
+Riesen Vorteil:
+-So kann ich z.B. FastAPI NUR für dieses eine Projekt installieren, anstatt global
+-Kriege keine Versionsprobleme mit anderen Projekten
+-Ist der professionelle Standard
+
+Dazu gut: "pip freeze > requirements.txt"
+-Alle installierten Pakete/Software wird mit Version gespeichert (z.B. für dieses Projekt: "fastapi==0.136.3")
+-Um alles auf einem neuen PC zu installieren/einzurichten, benutzt man: "pip install -r requirements.txt"
+
+------------------------------------------------------------------------
+
+from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "API läuft"}
+
+
+uvicorn main:app --reload in der CMD
+Dann im Browser:
+http://127.0.0.1:8000
+
+Und Doku automatisch:
+http://127.0.0.1:8000/docs
+
+
+from fastapi import FastAPI, UploadFile, File
+app = FastAPI()
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    content = await file.read()
+
+    return {
+        "filename": file.filename,
+        "size": len(content)
+    }
+
+Wenn die main direkt im Projektverzeichnis liegt 
+uvicorn main:app --host 127.0.0.1 --port 8000, in der CMD
+
+Wenn die main in einem Unterverzeichnis liegt
+uvicorn backend.main:app --host 127.0.0.1 --port 8000, in der CMD
+
+------------------------------------------------------------------------
+
+Front-End und Back-End
+    -Front-End  = Weboberfläche (HTML, CSS und JavaScript(Für Funktionen der Webseite/Aktualisieren der Webseite etc.))
+    -Back-End   = API Endpunkte, Python Code(für die Verarbeitung, Speicherung in der Datenbank, etc.)
+
+Was ist eine Webseite?
+    -Die Webseite ist das HTML Dokument, dort ist auch die zu benutzende CSS und JavaScript Datei hinterlegt (Name + Pfad)
+
+Was ist die API?
+    -FastAPI Endpunkte, die im JS Code per z.B. "fetch" ausgeführt werden können
+
+Was passiert, wenn der Webserver nicht gestartet wird?
+    -Die fetch-Funktionen im JS Code werden keine korrekten Werte liefern, da die Endpunkte nicht aufgerufen werden können
+
+Wie öffne ich eine Webseite?
+    -Ich doppelklicke auf das HTML Dokument, dann wird die Webseite geöffnet
+
+""" 

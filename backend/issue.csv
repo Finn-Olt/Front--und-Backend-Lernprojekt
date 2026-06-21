@@ -1,0 +1,4 @@
+id,quellDatei,titel,beschreibung,prio,status,
+a1-bC,issue1.csv,Login Fehler,Benutzer kann sich nicht anmelden,,OPEN
+b3-Cd,issue2.csv,Drucker Fehler,Drucker reagiert nicht,,OPEN
+z5-EE,issue3.csv,Netzwerk Problem,Keine Internetverbindung,,OPEN

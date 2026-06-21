@@ -1,0 +1,132 @@
+/* Element -> Attribut -> Value */
+
+/* Betrifft die gesamte Webseite */
+body {
+    /* Um ein Hintergrundbild zu hinterlegen */
+    background-image: url("../bilder/background.jpg");
+    background-size: cover; /* => Bild füllt immer den ganzen Bildschirm */
+    background-position: center; /* => Bild bleibt zentriert */
+    background-repeat: no-repeat; /* => verhindert, dass das Bild gekachelt wird */
+    
+    
+    background-color: #f0f2f5; /* Hintergrundfarbe */
+    font-family: Arial, sans-serif; /* Schriftart */
+    margin: 30px;
+    padding: 20px; /* Abstand innerhalb */
+}
+
+/* dunkles Overlay */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
+}
+
+
+/* Hauptüberschrift */
+h1 {
+    color: #2c3e50;
+    text-align: center; /* Text zentrieren */
+    font-size: 40px;
+}
+
+
+/* Alle Buttons (<button>) */
+button {
+    background-color: #3498db;
+    color: white;
+    border: none; /* Standard-Rand entfernen */
+    padding: 10px 20px;
+    border-radius: 8px; /* Abgerundete Ecken */
+    cursor: pointer;
+}
+
+
+/* Wenn Maus über einem Button hovert */
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Entfernt die Standardpunkte */
+ul {
+    list-style: none;
+}
+
+
+/* Lässt die Listenobjekte wie eine Kachel/Karte aussehen */
+li {
+    background-color: white;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px gray;
+}
+
+
+
+
+.container {
+    display: flex;
+    gap: 10px;
+}
+
+
+.liste {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+
+/* 
+Setzen eines Bildes als Webseitenhintergrund
+body {
+    background-image: url("/static/bilder/test.jpg");
+    background-size: cover; => Bild füllt immer den ganzen Bildschirm
+    background-position: center; => Bild bleibt zentriert
+    background-repeat: no-repeat; => verhindert, dass das Bild gekachelt wird
+
+    color: white;
+}
+*/
+
+
+/* 
+Um Elemente anzuordnen
+<div class="container">
+    <button>Upload</button>
+    <button>Löschen</button>
+</div> 
+
+.container {
+    display: flex;
+    gap: 10px;
+}
+
+Für Tabellen
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+Standardpunkte in der Liste entfernen
+ul {
+    list-style: none;
+}
+
+
+Listeneinträge wie Karten darstellen
+li {
+    background-color: white;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px gray;
+}
+*/
