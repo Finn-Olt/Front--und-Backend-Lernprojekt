@@ -8,13 +8,13 @@
 
    `py -m venv venv`
 
-3. Nachdem die VENV erstellt wurde, installieren Sie alle benötigten Bibliotheken mit folgendem Befehl:
-
-   `pip install -r requirements.txt`
-
-4. Aktivieren Sie anschließend die VENV in der Eingabeaufforderung mit folgendem Befehl:
+3. Aktivieren Sie anschließend die VENV in der Eingabeaufforderung mit folgendem Befehl:
 
    `venv\Scripts\activate`
+
+4. Nachdem die VENV erstellt und aktiviert wurde, installieren Sie alle benötigten Bibliotheken mit folgendem Befehl:
+
+   `pip install -r requirements.txt`
 
 5. Danach können Sie den API-Server starten. Beispiel:
 
