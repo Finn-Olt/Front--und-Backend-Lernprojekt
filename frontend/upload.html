@@ -1,0 +1,52 @@
+<!-- Die Seite "Upload", nachdem der "Datei hochladen" Button geklickt wurde-->
+
+<!DOCTYPE html> +++ TODO anpassen!
+<html>
+<!-- Verbinden von CSS, JS und HTML  --> 
+
+<!-- Enthält Informationen über die Webseite, die nicht direkt sichtbar sind  --> 
+ <!-- Mögliche Inhalte:
+        -Titel der Webseite
+        -CSS-Dateien
+        -Informationen für Suchmaschinen
+        -Schriftarten  
+--> 
+<head>
+    <!-- CSS einbinden // rel bedeutet Relationship // Welche Beziehung die verlinkte Datei zur HTML-Seite hat // href ist der Pfad/die Adresse der Datei --> 
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+
+<!-- Alles was der Benutzer tatsächlich sieht --> 
+<body>
+    <!-- Überschrift 1 --> 
+    <h1>Ticketverwaltung</h1>
+
+    <h2 id="titel">Tickets</h2>
+    
+    <!-- Damit ich eine Datei hochladen kann // erstellt Eingabefeld, mit dem der Benutzer eine Datei vom Computer auswählen kann --> 
+    <input type="file" id="importDatei">
+
+    <!-- ul = untergeordnete Liste // li = Listeneintrag --> 
+    <ul class="liste">
+        <li>Ticket 1</li>
+        <li>Ticket 2</li>
+        <li>Ticket 3</li>
+    </ul>
+<!--
+TODO: Darauf umbauen, wenn ich mit den ersten Tests durch bin
+Hiermit kann ich auch mehrere Eigenschaften vom Ticket, z.B. Titel und Beschreibung anzeigen, mit UL nicht
+(<table>) oder Karten (<div>/<article>)
+ --> 
+
+    <div class="container">
+        <button class="uploadButton">Ticket hochladen</button>
+        <button class="getButton">Tickets anzeigen</button>
+        <button class="deleteButton">Löschen</button> +++ TODO raus
+    </div>
+
+    <p id="fehlermeldung"></p>
+
+    <!-- JS Datei laden // MUSS am Ende stehen, damit alle Button etc. schon vorhanden sind --> 
+    <script src="../static/js/index.js"></script>
+</body>
+</html>

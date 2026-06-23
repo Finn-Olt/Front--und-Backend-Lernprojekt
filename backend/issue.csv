@@ -1,4 +1,4 @@
 id,quellDatei,titel,beschreibung,prio,status,
-a1-bC,issue1.csv,Login Fehler,Benutzer kann sich nicht anmelden,,OPEN
-b3-Cd,issue2.csv,Drucker Fehler,Drucker reagiert nicht,,OPEN
-z5-EE,issue3.csv,Netzwerk Problem,Keine Internetverbindung,,OPEN
+test-1,.CSV,Datenbankanpassungen,Wie abgesprochen habe ich die Datenbankstruktur angepasst. Im Detail habe ich die Spalte <...> eingefügt.,Niedrig,Closed
+test-2,csv,Dokumentation,Ich habe die Dokumentation angepasst. Sollte noch etwas Fehler bitte bei mir melden.,Mittel,Closed
+test-3,,Geräte fehlen im Netz,Im Netzwerk werden mehrere Rechner nicht angezeigt. Ich bitte um schnellstmögliche Rücksprache.,Sehr Hoch,OPEN

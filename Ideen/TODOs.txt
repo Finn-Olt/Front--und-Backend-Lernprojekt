@@ -1,0 +1,29 @@
+Startseite:
+    -Hintergrund:
+        ->Animierte Hintergründe?
+            -Soll nicht so schwer sein, einmal ausprobieren, ob ich das mit meinem Verständnis-LVL hin kriege
+        ->Dynamische Hintergründe?
+        ->Geteilte Hintergründe?
+    -Anzeigen / Texte:
+        ->Statistik der Tickets z.B. 13 Tickets, davon 1 SDM 1 EVP 1 GID und 10 ohne Zuordnung
+            -Vermutlich am Besten als Tabelle, damit die Abstände etc. schön sind
+
+    -(Brauche ich nicht) Cookies (Nur bei einer Öffentlichen Webseite)
+
+    -Benötigte Button:
+        -Upload Button:
+            ->Nach dem klick komme ich auf eine Seite mit dem "Uploadformular"
+                ->Dateihochladen Möglichkeit
+                ->Anleitung/Regeln
+
+        -Tickets Button:
+            ->Nach dem Klick komme ich auf eine Seite, auf der alle Tickets aufgelistete sind
+            ->Beim Laden der Seite "Tickets" muss der "alleTicketsLaden" Endpunkt ausgeführt werden.
+            Anschließend müssen die zurück erhaltenen Tickets verarbeitet und angezeigt werden.
+                -Schlau wäre die anzahl der Tickets beim Einlesen zu ermitteln, damit danach Feld und Button mit dieser Anzahl 
+                 angelegt werden können
+            ->Benötigte Button:
+                -Delete Button:
+                    ->Delete Button neben den angezeigten Tickets
+                -"vergrößer"? Button
+                    ->Eine Möglichkeit, sich die Tickets vollständig auf der Webseite anzuzeigen

@@ -1,6 +1,6 @@
 {
 	"author": {
-		"id": "1",
+		"id": "EigeneID1",
 		"is_bot": false,
 		"login": "",
 		"name": ""
@@ -10,5 +10,5 @@
 	"labels": [],
 	"number": 2,
 	"state": "OPEN",
-	"title": "Test2 - Ist der Titel"
+	"title": "Korrektur der Datensätze, wie besprochen"
 }

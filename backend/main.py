@@ -7,13 +7,19 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 
 
 #todo die Verbindung wird nicht Zugelassen UND was sind CORS?
+#Wenn ich einen Server für die Webseite (HTML) benutze, werde ich das sehr wahrscheinlich nicht mehr brauchen!
 """ Sollte die Verbindung nicht zugelassen werden, aufgrund der unterschiedlichen Ursprünge (Vom lokalen Datenträger und API IP)
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    #Welche Webseite darf die API über JavaScript aufrufen
+    allow_origins=[
+        "http://127.0.0.1:5500"
+    ],
+    #Welche HTTP-Methoden erlaubt sind
     allow_methods=["*"],
+    #Welche HTTP-Header erlaubt sind
     allow_headers=["*"],
 )
 """
@@ -308,4 +314,18 @@ Was passiert, wenn der Webserver nicht gestartet wird?
 Wie öffne ich eine Webseite?
     -Ich doppelklicke auf das HTML Dokument, dann wird die Webseite geöffnet
 
+
+
+Frontend-Webserver
+Wechsle in den Frontend-Ordner:
+    -cd frontend //Wichtig, das muss im "Routverzeichnis" sein und ALLE benötigten Dateien müssen auf der Ebene oder in Unterordnern sein
+                 //Sonst wird das mit dem Zugriff schwer/problematisch
+                 
+Dann starte einen einfachen Python-Webserver:
+    -py -m http.server 5500 --bind 127.0.0.1  //Ohne das Bind kann der Webserver sehr wahrscheinlich auch von anderen Geräten im Netz gefunden werden
+
+Jetzt ist deine Webseite erreichbar unter:
+    -http://127.0.0.1:5500
+
 """ 
+

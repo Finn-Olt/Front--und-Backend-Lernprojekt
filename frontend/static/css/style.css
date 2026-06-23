@@ -1,21 +1,39 @@
 /* Element -> Attribut -> Value */
 
-/* Betrifft die gesamte Webseite */
+
+/* Langsam bewegendes Hintergrundbild / Muster */
 body {
-    /* Um ein Hintergrundbild zu hinterlegen */
-    background-image: url("../bilder/background.jpg");
-    background-size: cover; /* => Bild füllt immer den ganzen Bildschirm */
-    background-position: center; /* => Bild bleibt zentriert */
-    background-repeat: no-repeat; /* => verhindert, dass das Bild gekachelt wird */
-    
-    
-    background-color: #f0f2f5; /* Hintergrundfarbe */
+    background: linear-gradient(-45deg, #1e3c72, #2a5298, #1e3c72);
+    background-size: 400% 400%;
+    animation: gradient 10s ease infinite;
     font-family: Arial, sans-serif; /* Schriftart */
-    margin: 30px;
-    padding: 20px; /* Abstand innerhalb */
 }
 
-/* dunkles Overlay */
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+
+
+/* Betrifft die gesamte Webseite 
+body {
+    /* Um ein Hintergrundbild zu hinterlegen 
+    background-image: url("../bilder/background.jpg");
+    background-size: cover; /* => Bild füllt immer den ganzen Bildschirm 
+    background-position: center; /* => Bild bleibt zentriert 
+    background-repeat: no-repeat; /* => verhindert, dass das Bild gekachelt wird 
+    
+    
+    background-color: #f0f2f5; /* Hintergrundfarbe 
+
+    margin: 30px;
+    padding: 20px; /* Abstand innerhalb 
+}
+*/
+
+/* dunkles Overlay
 body::before {
     content: "";
     position: fixed;
@@ -28,7 +46,7 @@ body::before {
     background: rgba(0, 0, 0, 0.6);
     z-index: -1;
 }
-
+*/
 
 /* Hauptüberschrift */
 h1 {
@@ -43,7 +61,7 @@ button {
     background-color: #3498db;
     color: white;
     border: none; /* Standard-Rand entfernen */
-    padding: 10px 20px;
+    padding: 20px;
     border-radius: 8px; /* Abgerundete Ecken */
     cursor: pointer;
 }
@@ -74,13 +92,20 @@ li {
 
 .container {
     display: flex;
-    gap: 10px;
+    gap: 20px;
 }
 
 
 .liste {
     display: grid;
     grid-template-columns: 1fr 1fr;
+}
+
+
++++
+#fehlermeldung {
+    color: red;
+    font-weight: bold;
 }
 
 
@@ -129,4 +154,13 @@ li {
     border-radius: 10px;
     box-shadow: 0 0 5px gray;
 }
+
+Selectoren in CSS: (Welches HTML-Element meine ich?)
+1. .<Name>{} 
+    -. = Klasse (mehrfach verwendbar)
+    -<p class="fehler"></p> in HTML
+
+2. #<Name>{} 
+    -# = ID (einmal eindeutig) //Suche das Element mit der ID
+    -<p id="fehlermeldung"></p> in HTML
 */
